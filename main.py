@@ -160,7 +160,7 @@ while running:
                     age_input = ""
                     priority_input = ""
                     added_patients += 1
-                    priority_queue.sort(reverse=True)  # Sort the queue based on priority
+                    priority_queue.sort()  # Sort the queue based on priority
 
                 # Remove patient button
                 elif is_button_clicked((x, y), remove_button_rect):
@@ -234,7 +234,7 @@ while running:
                     age_input = ""
                     priority_input = ""
                     added_patients += 1
-                    priority_queue.sort(reverse=True)  # Sort the queue based on priority
+                    priority_queue.sort()  # Sort the queue based on priority
             elif event.unicode.isprintable():
                 # Only add printable characters to the input fields
                 if (
@@ -295,7 +295,7 @@ while running:
     draw_text("Remove Patient", remove_button_rect, color=BLACK)
     draw_text("Length", length_button_rect, color=BLACK)
     draw_text("Is Empty", is_empty_button_rect, color=BLACK)
-    draw_text("Top", peek_button_rect, color=BLACK)
+    draw_text("Peek", peek_button_rect, color=BLACK)
 
     # Draw priority queue
     draw_priority_queue()

@@ -85,7 +85,7 @@ def check_if_empty():
 def peek_at_top():
     if priority_queue:
         priority, _, patient = priority_queue[0]
-        messagebox.showinfo("Peek at Top", f"Name: {patient['name']}\nAge: {patient['age']}")
+        messagebox.showinfo("Peek at Top", f"Name: {patient['name']}\nAge: {patient['age']}\nPriority: {priority}")
     else:
         messagebox.showinfo("Peek at Top", "The priority queue is empty.")
 

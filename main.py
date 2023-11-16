@@ -71,6 +71,25 @@ def show_error(message):
 def show_max_capacity_error():
     messagebox.showinfo("Error", "Max capacity reached. Cannot add more patients.")
 
+# Function to display length of the priority queue
+def show_queue_length():
+    length = len(priority_queue)
+    messagebox.showinfo("Priority Queue Length", f"The length of the priority queue is {length}.")
+
+# Function to check if the priority queue is empty
+def check_if_empty():
+    is_empty = not bool(priority_queue)
+    messagebox.showinfo("Priority Queue Empty", f"The priority queue is {'empty' if is_empty else 'not empty'}.")
+
+# Function to peek at the patient at the top of the priority queue
+def peek_at_top():
+    if priority_queue:
+        priority, _, patient = priority_queue[0]
+        messagebox.showinfo("Peek at Top", f"The patient at the top of the priority queue is:\n"
+                                            f"Name: {patient['name']}\nAge: {patient['age']}\nPriority: {priority}")
+    else:
+        messagebox.showinfo("Peek at Top", "The priority queue is empty.")
+
 # Initialize input fields and labels
 name_label_rect = pygame.Rect(PADDING, PADDING, BUTTON_WIDTH, 30)
 name_input_rect = pygame.Rect(name_label_rect.left, name_label_rect.bottom + 5, BUTTON_WIDTH, 30)
@@ -88,6 +107,9 @@ priority_input = ""
 # Initialize button rectangles
 add_button_rect = pygame.Rect(PADDING, priority_input_rect.bottom + 20, BUTTON_WIDTH, 50)
 remove_button_rect = pygame.Rect(PADDING, add_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+length_button_rect = pygame.Rect(PADDING, remove_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+is_empty_button_rect = pygame.Rect(PADDING, length_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+peek_button_rect = pygame.Rect(PADDING, is_empty_button_rect.bottom + 10, BUTTON_WIDTH, 50)
 
 # Display section dimensions
 display_width = WIDTH // 2 - 50  # Adjusted width with a 25px margin on both sides
@@ -146,6 +168,18 @@ while running:
                     if priority_queue:
                         heapq.heappop(priority_queue)
                         added_patients -= 1
+
+                # Length button
+                elif is_button_clicked((x, y), length_button_rect):
+                    show_queue_length()
+
+                # Is Empty button
+                elif is_button_clicked((x, y), is_empty_button_rect):
+                    check_if_empty()
+
+                # Peek button
+                elif is_button_clicked((x, y), peek_button_rect):
+                    peek_at_top()
 
         elif event.type == pygame.MOUSEMOTION:
             x, y = event.pos
@@ -255,8 +289,14 @@ while running:
     # Draw buttons with centered text
     pygame.draw.rect(screen, (200, 200, 200), add_button_rect)
     pygame.draw.rect(screen, (200, 200, 200), remove_button_rect)
+    pygame.draw.rect(screen, (200, 200, 200), length_button_rect)
+    pygame.draw.rect(screen, (200, 200, 200), is_empty_button_rect)
+    pygame.draw.rect(screen, (200, 200, 200), peek_button_rect)
     draw_text("Add Patient", add_button_rect, color=BLACK)
     draw_text("Remove Patient", remove_button_rect, color=BLACK)
+    draw_text("Length", length_button_rect, color=BLACK)
+    draw_text("Is Empty", is_empty_button_rect, color=BLACK)
+    draw_text("Peek", peek_button_rect, color=BLACK)
 
     # Draw priority queue
     draw_priority_queue()

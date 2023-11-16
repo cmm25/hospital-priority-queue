@@ -35,6 +35,7 @@ def draw_text(text, rect, color=BLACK):
 def draw_priority_queue():
     display_rect = pygame.Rect(WIDTH // 2 + 25, display_margin_top, display_width, display_height)
     gap_between_items = 4  # Adjust this value as needed
+    priority_queue.sort(reverse=True)
 
     for i, (priority, patient_id, patient) in enumerate(priority_queue):
         if i == 0:
@@ -47,7 +48,7 @@ def draw_priority_queue():
 
         # Check if the text fits within the display area
         if display_rect.collidepoint(display_rect.centerx, y_position):
-            text_rect = text_surface.get_rect(center=(display_rect.centerx, y_position))
+            text_rect = text_surface.get_rect(midleft=(display_rect.left + 10, y_position))
             screen.blit(text_surface, text_rect)
         else:
             break
@@ -122,7 +123,6 @@ added_patients = 0
 # Main loop
 running = True
 while running:
-    max_capacity_error_shown = False  # Flag to track if max capacity error is shown
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -160,7 +160,6 @@ while running:
                     age_input = ""
                     priority_input = ""
                     added_patients += 1
-                    priority_queue.sort()  # Sort the queue based on priority
 
                 # Remove patient button
                 elif is_button_clicked((x, y), remove_button_rect):
@@ -179,7 +178,6 @@ while running:
                 # Peek button
                 elif is_button_clicked((x, y), peek_button_rect):
                     peek_at_top()
-
         elif event.type == pygame.MOUSEMOTION:
             x, y = event.pos
 

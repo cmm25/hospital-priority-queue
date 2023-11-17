@@ -295,7 +295,7 @@ while running:
     draw_text("Is Empty", is_empty_button_rect, color=BLACK)
     draw_text("Peek", peek_button_rect, color=BLACK)
 
-    # Draw priority queue
+    # Drawing priority queue
     draw_priority_queue()
 
     pygame.display.flip()

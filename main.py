@@ -55,6 +55,12 @@ def draw_priority_queue():
 # Function to check if the mouse is over a button
 def is_button_clicked(pos, button_rect):
     return button_rect.collidepoint(pos)
+#keep track of patient numbers
+def update_patient_numbers():
+    global added_patients
+    for i, (priority, _, patient) in enumerate(priority_queue):
+        priority_queue[i] = (priority, i + 1, patient)
+    added_patients = len(priority_queue)
 
 # Function to check if the mouse is over an input area
 def is_input_area_hovered(pos, input_rect):
@@ -191,15 +197,21 @@ while running:
                     peek_at_top()
 
                 # Change patient priority button
+                # Change patient priority button
                 elif is_button_clicked((x, y), change_button_rect):
                     try:
                         patient_number = int(patient_number_input)
                         new_priority = int(new_priority_input)
-                        if 0 <= patient_number < len(priority_queue) and 1 <= new_priority <= 5:
+                        if 1 <= patient_number <= len(priority_queue) and 1 <= new_priority <= 5:
                             # Change the priority of the specified patient
-                            _, patient_id, patient = priority_queue[patient_number]
+                            _, old_patient_number, patient = priority_queue[patient_number - 1]
                             heapq.heappop(priority_queue)
-                            heapq.heappush(priority_queue, (new_priority, patient_id, patient))
+                            heapq.heappush(priority_queue, (new_priority, old_patient_number, patient))
+
+                            # Update patient_number based on the new position
+                            priority_queue.sort()  # Sort the queue based on priority
+                            patient_number = [p[1] for p in priority_queue].index(old_patient_number) + 1
+
                             # Clear input fields
                             patient_number_input = ""
                             new_priority_input = ""

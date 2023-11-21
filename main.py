@@ -35,20 +35,22 @@ def draw_text(text, rect, color=BLACK):
 def draw_priority_queue():
     display_rect = pygame.Rect(WIDTH // 2 + 25, display_margin_top, display_width, display_height)
     gap_between_items = 4  # Adjust this value as needed
-    priority_queue.sort(reverse=True)
 
-    for i, (priority, patient_number, patient) in enumerate(priority_queue):
+    # Sort the priority queue based on priority and order of addition
+    sorted_queue = sorted(priority_queue, key=lambda x: (-x[0], x[1]))
+
+    for i, (_, patient_id, patient) in enumerate(sorted_queue):
         if i == 0:
             y_position = display_rect.top + 12
         else:
             y_position = display_rect.top + 12 + i * (FONT_SIZE + gap_between_items)
 
-        text = f"{patient_number}. {patient['name']} - Age: {patient['age']} Priority: {priority}"
+        text = f"{i + 1}. {patient['name']} - Age: {patient['age']} Priority: {sorted_queue[i][0]}"
         text_surface = font.render(text, True, BLACK)
 
         # Check if the text fits within the display area
         if display_rect.collidepoint(display_rect.centerx, y_position):
-            text_rect = text_surface.get_rect(midleft=(display_rect.left + 10, y_position))
+            text_rect = text_surface.get_rect(center=(display_rect.centerx, y_position))
             screen.blit(text_surface, text_rect)
         else:
             break
@@ -81,6 +83,14 @@ def show_max_capacity_error():
 def show_queue_length():
     length = len(priority_queue)
     messagebox.showinfo("Priority Queue Length", f"The length of the priority queue is {length}.")
+# Function to add a patient to the priority queue
+def add_patient(patient_name, patient_age, patient_priority):
+    global added_patients
+    patient = {'name': patient_name, 'age': patient_age, 'priority': patient_priority}
+    # Negate the priority when adding to the heap
+    heapq.heappush(priority_queue, (-patient_priority, added_patients + 1, patient))
+    update_patient_numbers()
+    priority_queue.sort()  # Sort the queue based on priority and order of addition
 
 # Function to check if the priority queue is empty
 def check_if_empty():
@@ -149,7 +159,6 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 x, y = event.pos
-
                 # Add patient button
                 if is_button_clicked((x, y), add_button_rect) and added_patients < MAX_PATIENTS:
                     # Get patient information from input fields
@@ -172,19 +181,24 @@ while running:
                         continue
 
                     patient = {'name': patient_name, 'age': patient_age}
-                    heapq.heappush(priority_queue, (patient_priority, added_patients + 1, patient))
+                    patient_id = added_patients  # Assign a unique ID to the patient based on order added
+                    heapq.heappush(priority_queue, (patient_priority, patient_id, patient))
                     # Clear input fields
                     name_input = ""
                     age_input = ""
                     priority_input = ""
                     added_patients += 1
+
                 # Remove patient button
                 elif is_button_clicked((x, y), remove_button_rect):
                     if priority_queue:
                         heapq.heappop(priority_queue)
                         added_patients -= 1
+                        update_patient_numbers()
+                        priority_queue.sort(reverse=True)
 
-                # Length button
+
+                        # Length button
                 elif is_button_clicked((x, y), length_button_rect):
                     show_queue_length()
 
@@ -197,20 +211,15 @@ while running:
                     peek_at_top()
 
                 # Change patient priority button
-                # Change patient priority button
                 elif is_button_clicked((x, y), change_button_rect):
                     try:
                         patient_number = int(patient_number_input)
                         new_priority = int(new_priority_input)
-                        if 1 <= patient_number <= len(priority_queue) and 1 <= new_priority <= 5:
+                        if 0 <= patient_number < len(priority_queue) and 1 <= new_priority <= 5:
                             # Change the priority of the specified patient
-                            _, old_patient_number, patient = priority_queue[patient_number - 1]
+                            _, _, patient = priority_queue[patient_number - 1]
                             heapq.heappop(priority_queue)
-                            heapq.heappush(priority_queue, (new_priority, old_patient_number, patient))
-
-                            # Update patient_number based on the new position
-                            priority_queue.sort()  # Sort the queue based on priority
-                            patient_number = [p[1] for p in priority_queue].index(old_patient_number) + 1
+                            heapq.heappush(priority_queue, (new_priority, len(priority_queue) + 1, patient))
 
                             # Clear input fields
                             patient_number_input = ""
@@ -272,8 +281,9 @@ while running:
                         continue
 
                     patient = {'name': patient_name, 'age': patient_age}
-                    patient_id = added_patients  # Assign a unique ID to the patient based on order added
-                    heapq.heappush(priority_queue, (patient_priority, patient_id, patient))
+                    patient_id = len(priority_queue)  # Assign a unique ID to the patient based on the current queue size
+                    heapq.heappush(priority_queue, (patient_priority, patient_id + 1, patient))
+
                     # Clear input fields
                     name_input = ""
                     age_input = ""

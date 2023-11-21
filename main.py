@@ -85,12 +85,12 @@ def show_queue_length():
     messagebox.showinfo("Priority Queue Length", f"The length of the priority queue is {length}.")
 # Function to add a patient to the priority queue
 def add_patient(patient_name, patient_age, patient_priority):
-    global added_patients
+    global added_patients, patient_counter
     patient = {'name': patient_name, 'age': patient_age, 'priority': patient_priority}
-    # Negate the priority when adding to the heap
-    heapq.heappush(priority_queue, (-patient_priority, added_patients + 1, patient))
+    heapq.heappush(priority_queue, (patient_priority, patient_counter, patient))
     update_patient_numbers()
-    priority_queue.sort()  # Sort the queue based on priority and order of addition
+    added_patients = len(priority_queue)
+    patient_counter += 1
 
 # Function to check if the priority queue is empty
 def check_if_empty():
@@ -211,17 +211,22 @@ while running:
                     peek_at_top()
 
                 # Change patient priority button
+                # Change patient priority button
                 elif is_button_clicked((x, y), change_button_rect):
                     try:
                         patient_number = int(patient_number_input)
                         new_priority = int(new_priority_input)
                         if 1 <= patient_number <= len(priority_queue) and 1 <= new_priority <= 5:
                             # Change the priority of the specified patient
-                            priority_queue[patient_number - 1] = (
-                            new_priority, priority_queue[patient_number - 1][1], priority_queue[patient_number - 1][2])
+                            _, _, patient = priority_queue[patient_number - 1]
+                            heapq.heappop(priority_queue)
+                            heapq.heappush(priority_queue, (new_priority, len(priority_queue) + 1, patient))
 
                             # Sort the priority queue based on priority and order of addition
                             priority_queue.sort(key=lambda x: (-x[0], x[1]))
+
+                            # Update patient numbers for all patients in the queue
+                            update_patient_numbers()
 
                             # Clear input fields
                             patient_number_input = ""
@@ -230,6 +235,7 @@ while running:
                             show_error("Invalid patient number or new priority.")
                     except ValueError:
                         show_error("Please enter valid numbers for patient number and new priority.")
+
 
         elif event.type == pygame.MOUSEMOTION:
             x, y = event.pos

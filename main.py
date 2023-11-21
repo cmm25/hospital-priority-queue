@@ -7,7 +7,7 @@ from tkinter import messagebox
 pygame.init()
 
 # Constants
-WIDTH, HEIGHT = 800, 650
+WIDTH, HEIGHT = 1000, 650
 BACKGROUND = (228, 213, 199)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -100,18 +100,27 @@ age_input_rect = pygame.Rect(age_label_rect.left, age_label_rect.bottom + 5, BUT
 priority_label_rect = pygame.Rect(PADDING, age_input_rect.bottom + 10, BUTTON_WIDTH, 30)
 priority_input_rect = pygame.Rect(priority_label_rect.left, priority_label_rect.bottom + 5, BUTTON_WIDTH, 30)
 
+# New input fields and labels
+patient_number_label_rect = pygame.Rect(PADDING, priority_input_rect.bottom + 10, BUTTON_WIDTH, 30)
+patient_number_input_rect = pygame.Rect(patient_number_label_rect.left, patient_number_label_rect.bottom + 5, BUTTON_WIDTH, 30)
+
+new_priority_label_rect = pygame.Rect(PADDING, patient_number_input_rect.bottom + 10, BUTTON_WIDTH, 30)
+new_priority_input_rect = pygame.Rect(new_priority_label_rect.left, new_priority_label_rect.bottom + 5, BUTTON_WIDTH, 30)
+
 name_input = ""
 age_input = ""
 priority_input = ""
+patient_number_input = ""
+new_priority_input = ""
 
 # Initialize button rectangles
-
-add_button_rect = pygame.Rect(PADDING, priority_input_rect.bottom + 20, BUTTON_WIDTH, 50)
-remove_button_rect = pygame.Rect(PADDING, add_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+add_button_rect = pygame.Rect(PADDING, new_priority_input_rect.bottom + 20, BUTTON_WIDTH, 50)
+remove_button_rect = pygame.Rect(WIDTH // 2 + PADDING, add_button_rect.top, BUTTON_WIDTH, 50)
 length_button_rect = pygame.Rect(PADDING, remove_button_rect.bottom + 10, BUTTON_WIDTH, 50)
-is_empty_button_rect = pygame.Rect(PADDING, length_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+is_empty_button_rect = pygame.Rect(WIDTH // 2 + PADDING, length_button_rect.top, BUTTON_WIDTH, 50)
 peek_button_rect = pygame.Rect(PADDING, is_empty_button_rect.bottom + 10, BUTTON_WIDTH, 50)
-change_button_rect = pygame.Rect(PADDING, peek_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+change_button_rect = pygame.Rect(WIDTH // 2 + PADDING, peek_button_rect.top, BUTTON_WIDTH, 50)
+
 
 # Display section dimensions
 display_width = WIDTH // 2 - 50  # Adjusted width with a 25px margin on both sides
@@ -149,9 +158,8 @@ while running:
                     patient_priority = max(1, min(5, patient_priority))
 
                     # Check if max capacity is reached
-                    if added_patients >= MAX_PATIENTS and not max_capacity_error_shown:
+                    if added_patients >= MAX_PATIENTS:
                         show_max_capacity_error()
-                        max_capacity_error_shown = True
                         continue
 
                     patient = {'name': patient_name, 'age': patient_age}
@@ -180,6 +188,7 @@ while running:
                 # Peek button
                 elif is_button_clicked((x, y), peek_button_rect):
                     peek_at_top()
+
                 # Change patient priority button
                 elif is_button_clicked((x, y), change_button_rect):
                     try:
@@ -206,6 +215,8 @@ while running:
                 is_input_area_hovered((x, y), name_input_rect)
                 or is_input_area_hovered((x, y), age_input_rect)
                 or is_input_area_hovered((x, y), priority_input_rect)
+                or is_input_area_hovered((x, y), patient_number_input_rect)
+                or is_input_area_hovered((x, y), new_priority_input_rect)
             ):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
             else:
@@ -219,6 +230,10 @@ while running:
                     age_input = age_input[:-1]
                 elif is_input_area_hovered(pygame.mouse.get_pos(), priority_input_rect):
                     priority_input = priority_input[:-1]
+                elif is_input_area_hovered(pygame.mouse.get_pos(), patient_number_input_rect):
+                    patient_number_input = patient_number_input[:-1]
+                elif is_input_area_hovered(pygame.mouse.get_pos(), new_priority_input_rect):
+                    new_priority_input = new_priority_input[:-1]
             elif event.key == pygame.K_RETURN:
                 # Check if the input field is focused
                 if is_input_area_hovered(pygame.mouse.get_pos(), name_input_rect):
@@ -239,9 +254,8 @@ while running:
                     patient_priority = max(1, min(5, patient_priority))
 
                     # Check if max capacity is reached
-                    if added_patients >= MAX_PATIENTS and not max_capacity_error_shown:
+                    if added_patients >= MAX_PATIENTS:
                         show_max_capacity_error()
-                        max_capacity_error_shown = True
                         continue
 
                     patient = {'name': patient_name, 'age': patient_age}
@@ -253,6 +267,23 @@ while running:
                     priority_input = ""
                     added_patients += 1
                     priority_queue.sort()  # Sort the queue based on priority
+                elif is_input_area_hovered(pygame.mouse.get_pos(), patient_number_input_rect):
+                    # Pressing Enter will change the patient priority with the current input
+                    try:
+                        patient_number = int(patient_number_input)
+                        new_priority = int(new_priority_input)
+                        if 0 <= patient_number < len(priority_queue) and 1 <= new_priority <= 5:
+                            # Change the priority of the specified patient
+                            _, patient_id, patient = priority_queue[patient_number]
+                            heapq.heappop(priority_queue)
+                            heapq.heappush(priority_queue, (new_priority, patient_id, patient))
+                            # Clear input fields
+                            patient_number_input = ""
+                            new_priority_input = ""
+                        else:
+                            show_error("Invalid patient number or new priority.")
+                    except ValueError:
+                        show_error("Please enter valid numbers for patient number and new priority.")
             elif event.unicode.isprintable():
                 # Only add printable characters to the input fields
                 if (
@@ -274,9 +305,22 @@ while running:
                     # Limit the input text to stay inside the input area
                     if font.size(priority_input + event.unicode)[0] <= priority_input_rect.width - 10:
                         priority_input += event.unicode
+                elif (
+                    is_input_area_hovered(pygame.mouse.get_pos(), patient_number_input_rect)
+                    and event.unicode.isdigit()
+                ):
+                    # Limit the input text to stay inside the input area
+                    if font.size(patient_number_input + event.unicode)[0] <= patient_number_input_rect.width - 10:
+                        patient_number_input += event.unicode
+                elif (
+                    is_input_area_hovered(pygame.mouse.get_pos(), new_priority_input_rect)
+                    and event.unicode.isdigit()
+                ):
+                    # Limit the input text to stay inside the input area
+                    if font.size(new_priority_input + event.unicode)[0] <= new_priority_input_rect.width - 10:
+                        new_priority_input += event.unicode
 
     screen.fill(BACKGROUND)
-
     # Draw display section with border
     display_rect = pygame.Rect(WIDTH // 2 + 25, display_margin_top, display_width, display_height)
     pygame.draw.rect(screen, WHITE, display_rect)
@@ -286,9 +330,13 @@ while running:
     pygame.draw.rect(screen, BACKGROUND, name_label_rect)
     pygame.draw.rect(screen, BACKGROUND, age_label_rect)
     pygame.draw.rect(screen, BACKGROUND, priority_label_rect)
+    pygame.draw.rect(screen, BACKGROUND, patient_number_label_rect)
+    pygame.draw.rect(screen, BACKGROUND, new_priority_label_rect)
     draw_text("Name:", name_label_rect, color=BLACK)
     draw_text("Age:", age_label_rect, color=BLACK)
     draw_text("Priority:", priority_label_rect, color=BLACK)
+    draw_text("Patient Number:", patient_number_label_rect, color=BLACK)
+    draw_text("New Priority:", new_priority_label_rect, color=BLACK)
 
     # Draw input fields with black border
     pygame.draw.rect(screen, BLACK, name_input_rect, BORDER_THICKNESS)
@@ -302,6 +350,14 @@ while running:
     pygame.draw.rect(screen, BLACK, priority_input_rect, BORDER_THICKNESS)
     pygame.draw.rect(screen, WHITE, priority_input_rect.inflate(-BORDER_THICKNESS * 2, -BORDER_THICKNESS * 2))
     draw_text(priority_input, priority_input_rect, color=BLACK)
+
+    pygame.draw.rect(screen, BLACK, patient_number_input_rect, BORDER_THICKNESS)
+    pygame.draw.rect(screen, WHITE, patient_number_input_rect.inflate(-BORDER_THICKNESS * 2, -BORDER_THICKNESS * 2))
+    draw_text(patient_number_input, patient_number_input_rect, color=BLACK)
+
+    pygame.draw.rect(screen, BLACK, new_priority_input_rect, BORDER_THICKNESS)
+    pygame.draw.rect(screen, WHITE, new_priority_input_rect.inflate(-BORDER_THICKNESS * 2, -BORDER_THICKNESS * 2))
+    draw_text(new_priority_input, new_priority_input_rect, color=BLACK)
 
     # Draw buttons with centered text
     pygame.draw.rect(screen, (200, 200, 200), add_button_rect)

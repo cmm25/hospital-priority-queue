@@ -215,11 +215,13 @@ while running:
                     try:
                         patient_number = int(patient_number_input)
                         new_priority = int(new_priority_input)
-                        if 0 <= patient_number < len(priority_queue) and 1 <= new_priority <= 5:
+                        if 1 <= patient_number <= len(priority_queue) and 1 <= new_priority <= 5:
                             # Change the priority of the specified patient
-                            _, _, patient = priority_queue[patient_number - 1]
-                            heapq.heappop(priority_queue)
-                            heapq.heappush(priority_queue, (new_priority, len(priority_queue) + 1, patient))
+                            priority_queue[patient_number - 1] = (
+                            new_priority, priority_queue[patient_number - 1][1], priority_queue[patient_number - 1][2])
+
+                            # Sort the priority queue based on priority and order of addition
+                            priority_queue.sort(key=lambda x: (-x[0], x[1]))
 
                             # Clear input fields
                             patient_number_input = ""

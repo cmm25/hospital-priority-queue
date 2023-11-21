@@ -35,6 +35,7 @@ def draw_text(text, rect, color=BLACK):
 def draw_priority_queue():
     display_rect = pygame.Rect(WIDTH // 2 + 25, display_margin_top, display_width, display_height)
     gap_between_items = 4  # Adjust this value as needed
+    priority_queue.sort(reverse=True)
 
     for i, (priority, patient_id, patient) in enumerate(priority_queue):
         if i == 0:
@@ -47,7 +48,7 @@ def draw_priority_queue():
 
         # Check if the text fits within the display area
         if display_rect.collidepoint(display_rect.centerx, y_position):
-            text_rect = text_surface.get_rect(center=(display_rect.centerx, y_position))
+            text_rect = text_surface.get_rect(midleft=(display_rect.left + 10, y_position))
             screen.blit(text_surface, text_rect)
         else:
             break
@@ -66,10 +67,28 @@ root.withdraw()
 
 # Function to show an alert error
 def show_error(message):
-    error_window = tk.Toplevel(root)
-    error_window.title("Error")
-    tk.Label(error_window, text=message, padx=20, pady=20, background='#E4D5C7').pack()
-    tk.Button(error_window, text="OK", command=error_window.destroy).pack()
+    messagebox.showinfo("Error", message)
+
+def show_max_capacity_error():
+    messagebox.showinfo("Error", "Max capacity reached. Cannot add more patients.")
+
+# Function to display length of the priority queue
+def show_queue_length():
+    length = len(priority_queue)
+    messagebox.showinfo("Priority Queue Length", f"The length of the priority queue is {length}.")
+
+# Function to check if the priority queue is empty
+def check_if_empty():
+    is_empty = not bool(priority_queue)
+    messagebox.showinfo("Priority Queue Empty", f"The priority queue is {'empty' if is_empty else 'not empty'}.")
+
+# Function to peek at the patient at the top of the priority queue
+def peek_at_top():
+    if priority_queue:
+        priority, _, patient = priority_queue[0]
+        messagebox.showinfo("Peek at Top", f"Name: {patient['name']}\nAge: {patient['age']}\nPriority: {priority}")
+    else:
+        messagebox.showinfo("Peek at Top", "The priority queue is empty.")
 
 # Initialize input fields and labels
 name_label_rect = pygame.Rect(PADDING, PADDING, BUTTON_WIDTH, 30)
@@ -81,22 +100,18 @@ age_input_rect = pygame.Rect(age_label_rect.left, age_label_rect.bottom + 5, BUT
 priority_label_rect = pygame.Rect(PADDING, age_input_rect.bottom + 10, BUTTON_WIDTH, 30)
 priority_input_rect = pygame.Rect(priority_label_rect.left, priority_label_rect.bottom + 5, BUTTON_WIDTH, 30)
 
-patient_number_label_rect = pygame.Rect(PADDING, priority_input_rect.bottom + 10, BUTTON_WIDTH, 30)
-patient_number_input_rect = pygame.Rect(patient_number_label_rect.left, patient_number_label_rect.bottom + 5, BUTTON_WIDTH, 30)
-
-new_priority_label_rect = pygame.Rect(PADDING, patient_number_input_rect.bottom + 10, BUTTON_WIDTH, 30)
-new_priority_input_rect = pygame.Rect(new_priority_label_rect.left, new_priority_label_rect.bottom + 5, BUTTON_WIDTH, 30)
-
 name_input = ""
 age_input = ""
 priority_input = ""
-patient_number_input = ""
-new_priority_input = ""
 
 # Initialize button rectangles
-add_button_rect = pygame.Rect(PADDING, new_priority_input_rect.bottom + 20, BUTTON_WIDTH, 50)
+
+add_button_rect = pygame.Rect(PADDING, priority_input_rect.bottom + 20, BUTTON_WIDTH, 50)
 remove_button_rect = pygame.Rect(PADDING, add_button_rect.bottom + 10, BUTTON_WIDTH, 50)
-change_button_rect = pygame.Rect(PADDING, remove_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+length_button_rect = pygame.Rect(PADDING, remove_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+is_empty_button_rect = pygame.Rect(PADDING, length_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+peek_button_rect = pygame.Rect(PADDING, is_empty_button_rect.bottom + 10, BUTTON_WIDTH, 50)
+change_button_rect = pygame.Rect(PADDING, peek_button_rect.bottom + 10, BUTTON_WIDTH, 50)
 
 # Display section dimensions
 display_width = WIDTH // 2 - 50  # Adjusted width with a 25px margin on both sides
@@ -133,6 +148,12 @@ while running:
                     # Ensure priority is between 1 and 5
                     patient_priority = max(1, min(5, patient_priority))
 
+                    # Check if max capacity is reached
+                    if added_patients >= MAX_PATIENTS and not max_capacity_error_shown:
+                        show_max_capacity_error()
+                        max_capacity_error_shown = True
+                        continue
+
                     patient = {'name': patient_name, 'age': patient_age}
                     patient_id = added_patients  # Assign a unique ID to the patient based on order added
                     heapq.heappush(priority_queue, (patient_priority, patient_id, patient))
@@ -141,7 +162,6 @@ while running:
                     age_input = ""
                     priority_input = ""
                     added_patients += 1
-                    priority_queue.sort(reverse=True)  # Sort the queue based on priority
 
                 # Remove patient button
                 elif is_button_clicked((x, y), remove_button_rect):
@@ -149,23 +169,34 @@ while running:
                         heapq.heappop(priority_queue)
                         added_patients -= 1
 
+                # Length button
+                elif is_button_clicked((x, y), length_button_rect):
+                    show_queue_length()
+
+                # Is Empty button
+                elif is_button_clicked((x, y), is_empty_button_rect):
+                    check_if_empty()
+
+                # Peek button
+                elif is_button_clicked((x, y), peek_button_rect):
+                    peek_at_top()
                 # Change patient priority button
                 elif is_button_clicked((x, y), change_button_rect):
-                    # Get patient information from input fields
-                    patient_number = int(patient_number_input) if patient_number_input.isdigit() else -1
-                    new_priority = int(new_priority_input) if new_priority_input.isdigit() else -1
-
-                    # Ensure patient number is valid
-                    if 0 < patient_number <= added_patients and 0 < new_priority <= 5:
-                        # Update the priority of the specified patient
-                        for i, (_, p_id, p) in enumerate(priority_queue):
-                            if p_id == patient_number - 1:
-                                priority_queue[i] = (new_priority, p_id, p)
-                                heapq.heapify(priority_queue)
-                                break
-                    else:
-                        show_error("Invalid patient number or new priority.")
-                        continue
+                    try:
+                        patient_number = int(patient_number_input)
+                        new_priority = int(new_priority_input)
+                        if 0 <= patient_number < len(priority_queue) and 1 <= new_priority <= 5:
+                            # Change the priority of the specified patient
+                            _, patient_id, patient = priority_queue[patient_number]
+                            heapq.heappop(priority_queue)
+                            heapq.heappush(priority_queue, (new_priority, patient_id, patient))
+                            # Clear input fields
+                            patient_number_input = ""
+                            new_priority_input = ""
+                        else:
+                            show_error("Invalid patient number or new priority.")
+                    except ValueError:
+                        show_error("Please enter valid numbers for patient number and new priority.")
 
         elif event.type == pygame.MOUSEMOTION:
             x, y = event.pos
@@ -175,15 +206,74 @@ while running:
                 is_input_area_hovered((x, y), name_input_rect)
                 or is_input_area_hovered((x, y), age_input_rect)
                 or is_input_area_hovered((x, y), priority_input_rect)
-                or is_input_area_hovered((x, y), patient_number_input_rect)
-                or is_input_area_hovered((x, y), new_priority_input_rect)
             ):
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_IBEAM)
             else:
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
         elif event.type == pygame.KEYDOWN:
-            # ... (previous code remains unchanged)
+            if event.key == pygame.K_BACKSPACE:
+                if is_input_area_hovered(pygame.mouse.get_pos(), name_input_rect):
+                    name_input = name_input[:-1]
+                elif is_input_area_hovered(pygame.mouse.get_pos(), age_input_rect):
+                    age_input = age_input[:-1]
+                elif is_input_area_hovered(pygame.mouse.get_pos(), priority_input_rect):
+                    priority_input = priority_input[:-1]
+            elif event.key == pygame.K_RETURN:
+                # Check if the input field is focused
+                if is_input_area_hovered(pygame.mouse.get_pos(), name_input_rect):
+                    # Pressing Enter will add a new line in the input field
+                    name_input += "\n"
+                elif is_input_area_hovered(pygame.mouse.get_pos(), age_input_rect):
+                    # Pressing Enter will add the patient with the current input
+                    patient_name = name_input
+                    patient_age = int(age_input) if age_input.isdigit() else 0
+                    patient_priority = int(priority_input) if priority_input.isdigit() else 0
+
+                    # Ensure all fields are filled
+                    if not all([patient_name, patient_age, patient_priority]):
+                        show_error("Please enter patient information.")
+                        continue
+
+                    # Ensure priority is between 1 and 5
+                    patient_priority = max(1, min(5, patient_priority))
+
+                    # Check if max capacity is reached
+                    if added_patients >= MAX_PATIENTS and not max_capacity_error_shown:
+                        show_max_capacity_error()
+                        max_capacity_error_shown = True
+                        continue
+
+                    patient = {'name': patient_name, 'age': patient_age}
+                    patient_id = added_patients  # Assign a unique ID to the patient based on order added
+                    heapq.heappush(priority_queue, (patient_priority, patient_id, patient))
+                    # Clear input fields
+                    name_input = ""
+                    age_input = ""
+                    priority_input = ""
+                    added_patients += 1
+                    priority_queue.sort()  # Sort the queue based on priority
+            elif event.unicode.isprintable():
+                # Only add printable characters to the input fields
+                if (
+                    is_input_area_hovered(pygame.mouse.get_pos(), name_input_rect)
+                    and event.unicode.isalpha()
+                ):
+                    name_input += event.unicode
+                elif (
+                    is_input_area_hovered(pygame.mouse.get_pos(), age_input_rect)
+                    and event.unicode.isdigit()
+                ):
+                    # Limit the input text to stay inside the input area
+                    if font.size(age_input + event.unicode)[0] <= age_input_rect.width - 10:
+                        age_input += event.unicode
+                elif (
+                    is_input_area_hovered(pygame.mouse.get_pos(), priority_input_rect)
+                    and event.unicode.isdigit()
+                ):
+                    # Limit the input text to stay inside the input area
+                    if font.size(priority_input + event.unicode)[0] <= priority_input_rect.width - 10:
+                        priority_input += event.unicode
 
     screen.fill(BACKGROUND)
 
@@ -196,14 +286,9 @@ while running:
     pygame.draw.rect(screen, BACKGROUND, name_label_rect)
     pygame.draw.rect(screen, BACKGROUND, age_label_rect)
     pygame.draw.rect(screen, BACKGROUND, priority_label_rect)
-    pygame.draw.rect(screen, BACKGROUND, patient_number_label_rect)
-    pygame.draw.rect(screen, BACKGROUND, new_priority_label_rect)
-
     draw_text("Name:", name_label_rect, color=BLACK)
     draw_text("Age:", age_label_rect, color=BLACK)
     draw_text("Priority:", priority_label_rect, color=BLACK)
-    draw_text("Patient Number:", patient_number_label_rect, color=BLACK)
-    draw_text("New Priority:", new_priority_label_rect, color=BLACK)
 
     # Draw input fields with black border
     pygame.draw.rect(screen, BLACK, name_input_rect, BORDER_THICKNESS)
@@ -218,23 +303,21 @@ while running:
     pygame.draw.rect(screen, WHITE, priority_input_rect.inflate(-BORDER_THICKNESS * 2, -BORDER_THICKNESS * 2))
     draw_text(priority_input, priority_input_rect, color=BLACK)
 
-    pygame.draw.rect(screen, BLACK, patient_number_input_rect, BORDER_THICKNESS)
-    pygame.draw.rect(screen, WHITE, patient_number_input_rect.inflate(-BORDER_THICKNESS * 2, -BORDER_THICKNESS * 2))
-    draw_text(patient_number_input, patient_number_input_rect, color=BLACK)
-
-    pygame.draw.rect(screen, BLACK, new_priority_input_rect, BORDER_THICKNESS)
-    pygame.draw.rect(screen, WHITE, new_priority_input_rect.inflate(-BORDER_THICKNESS * 2, -BORDER_THICKNESS * 2))
-    draw_text(new_priority_input, new_priority_input_rect, color=BLACK)
-
     # Draw buttons with centered text
     pygame.draw.rect(screen, (200, 200, 200), add_button_rect)
     pygame.draw.rect(screen, (200, 200, 200), remove_button_rect)
+    pygame.draw.rect(screen, (200, 200, 200), length_button_rect)
+    pygame.draw.rect(screen, (200, 200, 200), is_empty_button_rect)
+    pygame.draw.rect(screen, (200, 200, 200), peek_button_rect)
     pygame.draw.rect(screen, (200, 200, 200), change_button_rect)
+    draw_text("Change", change_button_rect, color=BLACK)
     draw_text("Add Patient", add_button_rect, color=BLACK)
     draw_text("Remove Patient", remove_button_rect, color=BLACK)
-    draw_text("Change Priority", change_button_rect, color=BLACK)
+    draw_text("Length", length_button_rect, color=BLACK)
+    draw_text("Is Empty", is_empty_button_rect, color=BLACK)
+    draw_text("Peek", peek_button_rect, color=BLACK)
 
-    # Draw priority queue
+    # Drawing priority queue
     draw_priority_queue()
 
     pygame.display.flip()

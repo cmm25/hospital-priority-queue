@@ -37,13 +37,13 @@ def draw_priority_queue():
     gap_between_items = 4  # Adjust this value as needed
     priority_queue.sort(reverse=True)
 
-    for i, (priority, patient_id, patient) in enumerate(priority_queue):
+    for i, (priority, patient_number, patient) in enumerate(priority_queue):
         if i == 0:
             y_position = display_rect.top + 12
         else:
             y_position = display_rect.top + 12 + i * (FONT_SIZE + gap_between_items)
 
-        text = f"{i + 1}. {patient['name']} - Age: {patient['age']} Priority: {priority}"
+        text = f"{patient_number}. {patient['name']} - Age: {patient['age']} Priority: {priority}"
         text_surface = font.render(text, True, BLACK)
 
         # Check if the text fits within the display area
@@ -52,7 +52,6 @@ def draw_priority_queue():
             screen.blit(text_surface, text_rect)
         else:
             break
-
 # Function to check if the mouse is over a button
 def is_button_clicked(pos, button_rect):
     return button_rect.collidepoint(pos)
@@ -114,12 +113,15 @@ patient_number_input = ""
 new_priority_input = ""
 
 # Initialize button rectangles
-add_button_rect = pygame.Rect(PADDING, new_priority_input_rect.bottom + 20, BUTTON_WIDTH, 50)
-remove_button_rect = pygame.Rect(WIDTH // 2 + PADDING, add_button_rect.top, BUTTON_WIDTH, 50)
-length_button_rect = pygame.Rect(PADDING, remove_button_rect.bottom + 10, BUTTON_WIDTH, 50)
-is_empty_button_rect = pygame.Rect(WIDTH // 2 + PADDING, length_button_rect.top, BUTTON_WIDTH, 50)
-peek_button_rect = pygame.Rect(PADDING, is_empty_button_rect.bottom + 10, BUTTON_WIDTH, 50)
-change_button_rect = pygame.Rect(WIDTH // 2 + PADDING, peek_button_rect.top, BUTTON_WIDTH, 50)
+button_gap = 15
+button_width_with_gap = (WIDTH // 2 - 3 * PADDING - button_gap) // 2
+add_button_rect = pygame.Rect(PADDING, new_priority_input_rect.bottom + 20, button_width_with_gap, 50)
+remove_button_rect = pygame.Rect(add_button_rect.right + button_gap, add_button_rect.top, button_width_with_gap, 50)
+length_button_rect = pygame.Rect(add_button_rect.left, add_button_rect.bottom + 10, button_width_with_gap, 50)
+is_empty_button_rect = pygame.Rect(remove_button_rect.left, remove_button_rect.bottom + 10, button_width_with_gap, 50)
+peek_button_rect = pygame.Rect(add_button_rect.left, length_button_rect.bottom + 10, button_width_with_gap, 50)
+change_button_rect = pygame.Rect(remove_button_rect.left, is_empty_button_rect.bottom + 10, button_width_with_gap, 50)
+
 
 
 # Display section dimensions
@@ -158,19 +160,18 @@ while running:
                     patient_priority = max(1, min(5, patient_priority))
 
                     # Check if max capacity is reached
-                    if added_patients >= MAX_PATIENTS:
+                    if added_patients >= MAX_PATIENTS and not max_capacity_error_shown:
                         show_max_capacity_error()
+                        max_capacity_error_shown = True
                         continue
 
                     patient = {'name': patient_name, 'age': patient_age}
-                    patient_id = added_patients  # Assign a unique ID to the patient based on order added
-                    heapq.heappush(priority_queue, (patient_priority, patient_id, patient))
+                    heapq.heappush(priority_queue, (patient_priority, added_patients + 1, patient))
                     # Clear input fields
                     name_input = ""
                     age_input = ""
                     priority_input = ""
                     added_patients += 1
-
                 # Remove patient button
                 elif is_button_clicked((x, y), remove_button_rect):
                     if priority_queue:
@@ -321,10 +322,12 @@ while running:
                         new_priority_input += event.unicode
 
     screen.fill(BACKGROUND)
+
     # Draw display section with border
-    display_rect = pygame.Rect(WIDTH // 2 + 25, display_margin_top, display_width, display_height)
+    display_rect = pygame.Rect(WIDTH // 2 + 25, display_margin_top, WIDTH // 2 - 50, display_height)
     pygame.draw.rect(screen, WHITE, display_rect)
     pygame.draw.rect(screen, BLACK, display_rect, BORDER_THICKNESS)
+
 
     # Draw input labels
     pygame.draw.rect(screen, BACKGROUND, name_label_rect)

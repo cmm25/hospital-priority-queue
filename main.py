@@ -80,9 +80,11 @@ def show_max_capacity_error():
     messagebox.showinfo("Error", "Max capacity reached. Cannot add more patients.")
 
 # Function to display length of the priority queue
+
 def show_queue_length():
     length = len(priority_queue)
     messagebox.showinfo("Priority Queue Length", f"The length of the priority queue is {length}.")
+
 # Function to add a patient to the priority queue
 def add_patient(patient_name, patient_age, patient_priority):
     global added_patients, patient_counter
@@ -199,7 +201,8 @@ while running:
 
                         # Length button
                 elif is_button_clicked((x, y), length_button_rect):
-                    show_queue_length()
+                        show_queue_length()
+
 
                 # Is Empty button
                 elif is_button_clicked((x, y), is_empty_button_rect):
